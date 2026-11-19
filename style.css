@@ -1,0 +1,571 @@
+/* =========================================================
+   Wedding Video Guestbook — Tahap 1 (UI saja)
+   Palet: dark espresso, champagne gold, ivory
+   ========================================================= */
+
+:root {
+  --espresso-900: #1c120d;
+  --espresso-800: #241812;
+  --espresso-700: #33231a;
+  --espresso-600: #463225;
+  --gold: #cfb07a;
+  --gold-light: #e6d2a6;
+  --gold-dark: #a8854c;
+  --ivory: #f7f1e3;
+  --ivory-soft: rgba(247, 241, 227, 0.72);
+  --rec-red: #e0463c;
+
+  --font-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-sans: "Montserrat", "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --pad: clamp(20px, 4vmin, 48px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--espresso-900);
+  color: var(--ivory);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(207, 176, 122, 0.14), transparent 60%),
+    radial-gradient(ellipse at 50% 100%, rgba(207, 176, 122, 0.08), transparent 55%),
+    linear-gradient(160deg, var(--espresso-700), var(--espresso-900) 70%);
+}
+
+/* ---------- Screen system ---------- */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--pad);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(18px) scale(0.985);
+  transition:
+    opacity 0.6s var(--ease),
+    transform 0.6s var(--ease),
+    visibility 0s linear 0.6s;
+  pointer-events: none;
+}
+
+.screen.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+  pointer-events: auto;
+}
+
+.screen.is-leaving {
+  opacity: 0;
+  transform: translateY(-14px) scale(0.985);
+}
+
+.screen__inner {
+  width: 100%;
+  max-width: 1100px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(14px, 3vmin, 32px);
+  text-align: center;
+}
+.screen__inner--center { justify-content: center; }
+
+.screen__title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: clamp(2rem, 5.2vmin, 3.4rem);
+  color: var(--gold-light);
+  letter-spacing: 0.04em;
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: clamp(0.8rem, 1.9vmin, 1.05rem);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+/* ---------- Buttons (besar, ramah sentuhan) ---------- */
+.actions { display: flex; justify-content: center; width: 100%; }
+
+.btn {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: clamp(1.05rem, 2.6vmin, 1.4rem);
+  letter-spacing: 0.22em;
+  min-height: 76px;
+  min-width: min(380px, 86%);
+  padding: 0 clamp(28px, 6vmin, 64px);
+  border-radius: 999px;
+  border: 1.5px solid var(--gold);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  transition: transform 0.2s var(--ease), box-shadow 0.3s var(--ease), background 0.3s var(--ease), color 0.3s var(--ease);
+}
+.btn:active { transform: scale(0.96); }
+.btn:focus-visible { outline: 3px solid var(--gold-light); outline-offset: 4px; }
+
+.btn--primary {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold) 55%, var(--gold-dark));
+  color: var(--espresso-900);
+  box-shadow: 0 10px 30px rgba(207, 176, 122, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--gold-light);
+}
+.btn--ghost:active { background: rgba(207, 176, 122, 0.14); }
+
+.stop-square {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  background: var(--espresso-900);
+  display: inline-block;
+}
+
+/* ---------- Ornamen ---------- */
+.ornament {
+  width: min(320px, 60%);
+  height: 24px;
+  fill: var(--gold);
+  stroke: var(--gold);
+  stroke-width: 1;
+  opacity: 0.9;
+}
+.ornament line { stroke-linecap: round; }
+.ornament--small { width: min(220px, 50%); }
+
+/* ---------- 1. Welcome ---------- */
+.frame {
+  position: absolute;
+  inset: clamp(14px, 3vmin, 34px);
+  border: 1px solid rgba(207, 176, 122, 0.5);
+  border-radius: 6px;
+  pointer-events: none;
+}
+.frame::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(207, 176, 122, 0.2);
+  border-radius: 3px;
+}
+
+.welcome__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(16px, 3.6vmin, 36px);
+  text-align: center;
+  z-index: 1;
+}
+
+.names {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--ivory);
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.18em 0.3em;
+  font-size: clamp(3.4rem, 11vmin, 7.5rem);
+  text-shadow: 0 4px 30px rgba(207, 176, 122, 0.25);
+}
+.names__amp {
+  font-style: italic;
+  color: var(--gold);
+  font-size: 0.72em;
+}
+
+.subtitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.3rem, 3.4vmin, 2.1rem);
+  color: var(--ivory-soft);
+}
+
+/* Animasi masuk bertahap untuk Welcome */
+.screen--welcome.is-active .welcome__content > * {
+  animation: riseIn 0.9s var(--ease) both;
+}
+.screen--welcome.is-active .welcome__content > *:nth-child(1) { animation-delay: 0.15s; }
+.screen--welcome.is-active .welcome__content > *:nth-child(2) { animation-delay: 0.3s; }
+.screen--welcome.is-active .welcome__content > *:nth-child(3) { animation-delay: 0.45s; }
+.screen--welcome.is-active .welcome__content > *:nth-child(4) { animation-delay: 0.6s; }
+.screen--welcome.is-active .welcome__content > *:nth-child(5) { animation-delay: 0.8s; }
+
+.screen--welcome.is-active .btn--primary { animation: riseIn 0.9s var(--ease) 0.8s both, glow 3.2s ease-in-out 1.8s infinite; }
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes glow {
+  0%, 100% { box-shadow: 0 10px 30px rgba(207, 176, 122, 0.28), inset 0 1px 0 rgba(255,255,255,0.45); }
+  50%      { box-shadow: 0 12px 46px rgba(207, 176, 122, 0.5), inset 0 1px 0 rgba(255,255,255,0.45); }
+}
+
+/* ---------- Video / preview box (16:9) ---------- */
+.video-box,
+.camera-box {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  /* lebar mengikuti ruang tersedia, tapi tinggi dijaga agar tombol tetap terlihat */
+  width: min(100%, calc((100dvh - 330px) * 16 / 9));
+  min-width: 280px;
+  background: #0f0a07;
+  border: 1px solid rgba(207, 176, 122, 0.55);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 0 6px rgba(207, 176, 122, 0.07);
+}
+.video-box--small {
+  width: min(100%, calc((100dvh - 520px) * 16 / 9), 640px);
+}
+.video-box video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.video-box video[hidden] { display: none; }
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(207, 176, 122, 0.16), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0 12px, transparent 12px 24px),
+    #17100b;
+}
+.placeholder[hidden] { display: none; }
+.placeholder__title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.4rem, 3.4vmin, 2.2rem);
+  color: var(--gold-light);
+}
+.placeholder__note {
+  font-size: clamp(0.7rem, 1.6vmin, 0.9rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ivory-soft);
+}
+
+.play-icon {
+  width: clamp(64px, 11vmin, 104px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold);
+  display: grid;
+  place-items: center;
+  background: rgba(207, 176, 122, 0.08);
+}
+.play-icon span {
+  margin-left: 7%;
+  border-style: solid;
+  border-width: clamp(11px, 2vmin, 18px) 0 clamp(11px, 2vmin, 18px) clamp(18px, 3.2vmin, 30px);
+  border-color: transparent transparent transparent var(--gold);
+}
+
+.camera-icon svg {
+  width: clamp(46px, 8vmin, 72px);
+  fill: none; stroke: var(--gold); stroke-width: 2; stroke-linejoin: round;
+}
+
+/* Sudut bingkai kamera */
+.corner { position: absolute; width: 28px; height: 28px; border: 0 solid var(--gold-light); opacity: 0.85; }
+.corner--tl { top: 12px; left: 12px; border-top-width: 2px; border-left-width: 2px; }
+.corner--tr { top: 12px; right: 12px; border-top-width: 2px; border-right-width: 2px; }
+.corner--bl { bottom: 12px; left: 12px; border-bottom-width: 2px; border-left-width: 2px; }
+.corner--br { bottom: 12px; right: 12px; border-bottom-width: 2px; border-right-width: 2px; }
+
+/* ---------- 3. Countdown ---------- */
+.countdown__ring {
+  width: clamp(240px, 46vmin, 460px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(207, 176, 122, 0.6);
+  box-shadow: 0 0 0 14px rgba(207, 176, 122, 0.07), 0 0 80px rgba(207, 176, 122, 0.18) inset;
+  position: relative;
+}
+.countdown__ring::after {
+  content: "";
+  position: absolute;
+  inset: -26px;
+  border-radius: 50%;
+  border: 1px dashed rgba(207, 176, 122, 0.35);
+  animation: spin 24s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.countdown__number {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(9rem, 32vmin, 20rem);
+  line-height: 1;
+  color: var(--gold-light);
+  text-shadow: 0 6px 40px rgba(207, 176, 122, 0.45);
+}
+.countdown__number.tick { animation: tick 0.9s var(--ease) both; }
+@keyframes tick {
+  0%   { opacity: 0; transform: scale(1.7); filter: blur(8px); }
+  35%  { opacity: 1; transform: scale(1);   filter: blur(0); }
+  80%  { opacity: 1; transform: scale(0.96); }
+  100% { opacity: 0.35; transform: scale(0.85); }
+}
+.countdown__hint {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.2rem, 3vmin, 1.8rem);
+  color: var(--ivory-soft);
+}
+
+/* ---------- 4. Recording ---------- */
+.rec-bar {
+  width: min(100%, calc((100dvh - 330px) * 16 / 9));
+  min-width: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rec-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: rgba(224, 70, 60, 0.14);
+  border: 1px solid rgba(224, 70, 60, 0.6);
+}
+.rec-dot {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--rec-red);
+  box-shadow: 0 0 0 0 rgba(224, 70, 60, 0.7);
+  animation: pulse 1.4s ease-out infinite;
+}
+.rec-label { font-weight: 600; letter-spacing: 0.3em; color: #ff8a80; font-size: 1.05rem; }
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(224, 70, 60, 0.7); opacity: 1; }
+  70%  { box-shadow: 0 0 0 14px rgba(224, 70, 60, 0); opacity: 0.6; }
+  100% { box-shadow: 0 0 0 0 rgba(224, 70, 60, 0); opacity: 1; }
+}
+.rec-timer {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: clamp(1.8rem, 4.4vmin, 2.8rem);
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ivory);
+}
+
+.btn--stop { min-width: min(420px, 90%); }
+
+/* ---------- Integrasi kamera (Tahap 2) ---------- */
+.camera-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+  transform: scaleX(-1); /* mirror hanya pada preview; hasil rekaman tidak dimirror */
+}
+.camera-video[hidden] { display: none; }
+
+.video-box video.result-video {
+  position: absolute;
+  inset: 0;
+  object-fit: contain;
+  background: #000;
+}
+
+.btn:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; animation: none; }
+
+.notice {
+  display: block;
+  max-width: min(640px, 90vw);
+  padding: 14px 22px;
+  border-radius: 12px;
+  border: 1px solid rgba(224, 70, 60, 0.6);
+  background: rgba(224, 70, 60, 0.12);
+  color: #ffb4ab;
+  font-size: clamp(0.95rem, 2.2vmin, 1.15rem);
+  line-height: 1.5;
+  text-align: center;
+}
+.notice[hidden] { display: none; }
+
+/* ---------- Otomatisasi alur (Tahap 3) ---------- */
+.video-box video.intro-video {
+  position: absolute;
+  inset: 0;
+  object-fit: contain;
+  background: #000;
+}
+
+/* Tombol putar besar bila autoplay diblokir Chrome */
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  border: 0;
+  cursor: pointer;
+  background: rgba(15, 10, 7, 0.78);
+  color: var(--gold-light);
+  font-family: var(--font-sans);
+  animation: riseIn 0.5s var(--ease) both;
+}
+.play-overlay[hidden] { display: none; }
+.play-overlay:focus-visible { outline: 3px solid var(--gold-light); outline-offset: -6px; }
+.play-overlay .play-icon { width: clamp(84px, 14vmin, 130px); }
+.play-overlay__label {
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  font-size: clamp(0.85rem, 2vmin, 1.1rem);
+}
+
+.thanks__hint {
+  font-size: clamp(0.85rem, 2vmin, 1.05rem);
+  letter-spacing: 0.14em;
+  color: var(--ivory-soft);
+}
+.thanks__hint[hidden] { display: none; }
+
+/* ---------- Penyimpanan video (Tahap 4) ---------- */
+.save-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: min(640px, 92vw);
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(207, 176, 122, 0.35);
+  background: rgba(207, 176, 122, 0.07);
+  font-size: clamp(0.9rem, 2.1vmin, 1.1rem);
+  line-height: 1.45;
+  color: var(--ivory-soft);
+  text-align: center;
+}
+.save-status[hidden] { display: none; }
+.save-status[data-state="saved"] { border-color: rgba(207, 176, 122, 0.7); color: var(--gold-light); }
+.save-status[data-state="error"] {
+  border-color: rgba(224, 70, 60, 0.6);
+  background: rgba(224, 70, 60, 0.12);
+  color: #ffb4ab;
+}
+.save-status[data-state="saving"] .save-status__text::after {
+  content: "";
+  animation: dots 1.2s steps(1, end) infinite;
+}
+@keyframes dots {
+  0%   { content: ""; }
+  25%  { content: "."; }
+  50%  { content: ".."; }
+  75%  { content: "..."; }
+}
+
+.btn--small {
+  min-height: 56px;
+  min-width: 0;
+  font-size: clamp(0.9rem, 2vmin, 1.05rem);
+  letter-spacing: 0.14em;
+  padding: 0 32px;
+}
+.btn--small[hidden] { display: none; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(20px, 4vmin, 48px);
+  transform: translate(-50%, 24px);
+  z-index: 50;
+  max-width: 90vw;
+  padding: 14px 28px;
+  border-radius: 999px;
+  background: rgba(36, 24, 18, 0.96);
+  border: 1px solid var(--gold);
+  color: var(--gold-light);
+  font-size: clamp(0.95rem, 2.2vmin, 1.15rem);
+  letter-spacing: 0.06em;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+}
+.toast[hidden] { display: none; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast--error { border-color: rgba(224, 70, 60, 0.7); color: #ffb4ab; }
+
+/* ---------- 5. Thank you ---------- */
+.thanks__title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-style: italic;
+  font-size: clamp(3rem, 9vmin, 5.6rem);
+  color: var(--gold-light);
+  line-height: 1.05;
+}
+.thanks__text {
+  font-family: var(--font-serif);
+  font-size: clamp(1.2rem, 3vmin, 1.8rem);
+  line-height: 1.5;
+  color: var(--ivory-soft);
+}
+
+/* ---------- Tablet: portrait ---------- */
+@media (orientation: portrait) {
+  .video-box, .camera-box, .rec-bar { width: 100%; }
+  .video-box--small { width: min(100%, 640px); }
+  .screen__inner { gap: clamp(20px, 3.4vmax, 40px); }
+  .names { flex-direction: column; align-items: center; gap: 0.05em; font-size: clamp(4rem, 14vw, 8rem); }
+  .btn { width: 100%; max-width: 520px; }
+}
+
+/* ---------- Tablet: landscape (tinggi terbatas) ---------- */
+@media (orientation: landscape) and (max-height: 700px) {
+  .btn { min-height: 68px; }
+  .screen__inner { gap: 14px; }
+  .video-box, .camera-box, .rec-bar { width: min(100%, calc((100dvh - 270px) * 16 / 9)); }
+  .video-box--small { width: min(100%, calc((100dvh - 450px) * 16 / 9)); }
+  .thanks__text br { display: none; }
+}
+
+/* Hormati preferensi kurangi animasi */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

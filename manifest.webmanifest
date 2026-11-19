@@ -1,0 +1,35 @@
+{
+  "id": "./",
+  "name": "Wedding Video Guestbook",
+  "short_name": "Guestbook",
+  "description": "Buku tamu video pernikahan: tamu merekam pesan dan doa langsung dari tablet, tersimpan lokal.",
+  "lang": "id",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#241812",
+  "background_color": "#1c120d",
+  "categories": ["lifestyle", "photo"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

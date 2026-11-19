@@ -1,0 +1,90 @@
+/* =========================================================
+   Wedding Video Guestbook — Tahap 6: elemen PWA
+   Indikator online/offline & bilah pembaruan.
+   Dipakai bersama oleh index.html dan admin.html.
+   ========================================================= */
+
+.net-pill {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  left: 50%;
+  z-index: 200;
+  max-width: 92vw;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(28, 18, 13, 0.92);
+  border: 1px solid rgba(207, 176, 122, 0.55);
+  color: #e6d2a6;
+  font-family: "Montserrat", "Roboto", system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none; /* tidak pernah menghalangi ketukan tamu */
+  opacity: 0;
+  transform: translate(-50%, -10px);
+  transition: opacity 0.4s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.net-pill[hidden] { display: none; }
+.net-pill.show { opacity: 1; transform: translate(-50%, 0); }
+.net-pill::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e0a63c; /* offline: kuning-ambar */
+  flex: none;
+}
+.net-pill[data-state="online"]::before { background: #7bc47f; }
+
+.pwa-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 92px;
+  transform: translateX(-50%);
+  z-index: 150;
+  width: min(560px, calc(100vw - 24px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 20px;
+  border-radius: 16px;
+  background: #241812;
+  border: 1px solid #cfb07a;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  color: #f7f1e3;
+  font-family: "Montserrat", "Roboto", system-ui, sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+.pwa-bar p { flex: 1; }
+.pwa-bar button {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+  background: linear-gradient(135deg, #e6d2a6, #cfb07a 55%, #a8854c);
+  color: #1c120d;
+}
+.pwa-bar .pwa-bar__close {
+  width: 48px;
+  padding: 0;
+  font-size: 1.4rem;
+  letter-spacing: 0;
+  background: transparent;
+  color: #e6d2a6;
+  border: 1px solid rgba(207, 176, 122, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .net-pill { transition-duration: 0.01ms !important; }
+}

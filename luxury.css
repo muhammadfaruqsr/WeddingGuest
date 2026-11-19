@@ -1,0 +1,456 @@
+/* =========================================================
+   Wedding Video Guestbook — Tampilan Mewah (ornamen, 3D, animasi)
+   Dimuat SETELAH style.css → menimpa sebagian aturan tanpa mengubah struktur.
+   Variabel --tx / --ty (-1..1) diisi fx.js dari sentuhan atau sensor gerak
+   untuk efek parallax dan kemiringan 3D.
+
+   Hemat CPU: layar tidak aktif dijeda; layar REKAM mematikan semua dekorasi
+   agar MediaRecorder tidak terganggu; class body.lite (otomatis dari fx.js
+   saat perangkat lambat) mematikan efek paling berat.
+   ========================================================= */
+
+@property --a {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+:root {
+  --tx: 0;
+  --ty: 0;
+  --cam-fit: cover; /* layar rekam: "cover" = memenuhi layar (sisi dipotong), "contain" = tampil utuh 16:9 */
+  --foil: linear-gradient(105deg, #e9dcc0 0%, #f7f1e3 26%, #fffaf0 43%, #d4b57c 50%, #fffaf0 57%, #f7f1e3 74%, #e9dcc0 100%);
+  --foil-gold: linear-gradient(105deg, #a8854c 0%, #e6d2a6 34%, #fff3cf 50%, #e6d2a6 66%, #a8854c 100%);
+}
+
+/* ---------- Hemat CPU: jeda animasi di layar yang tidak tampil ---------- */
+.screen:not(.is-active) *,
+.screen:not(.is-active) *::before,
+.screen:not(.is-active) *::after {
+  animation-play-state: paused !important;
+}
+
+/* ---------- Panggung 3D & lapisan ---------- */
+.app {
+  perspective: 1500px;
+  perspective-origin: 50% 42%;
+  overflow: hidden;
+}
+
+.fx-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.fx-canvas--bg { z-index: 1; }
+.fx-canvas--top { z-index: 20; }
+.screen { z-index: 2; }
+
+/* Transisi antar layar dengan sentuhan 3D */
+.screen {
+  transform: translateY(26px) scale(0.965) rotateX(7deg);
+  transform-origin: 50% 100%;
+}
+.screen.is-active { transform: none; }
+.screen.is-leaving {
+  transform: translateY(-22px) scale(0.965) rotateX(-6deg);
+  transform-origin: 50% 0;
+}
+
+/* Kemiringan 3D mengikuti sentuhan / gerak tablet */
+.welcome__content,
+.screen--intro .screen__inner,
+.screen--countdown .screen__inner,
+.screen--thanks .screen__inner {
+  transform: rotateX(calc(var(--ty) * -4deg)) rotateY(calc(var(--tx) * 5deg));
+  transform-style: preserve-3d;
+  perspective: 1100px;
+}
+
+/* Kedalaman (sumbu Z) pada layar sambutan */
+.welcome__content > .eyebrow { translate: 0 0 24px; }
+.welcome__content > .names { translate: 0 0 70px; }
+.welcome__content > .ornament { translate: 0 0 36px; }
+.welcome__content > .subtitle { translate: 0 0 28px; }
+.welcome__content > .btn { translate: 0 0 52px; }
+
+/* ---------- Dekorasi emas permanen ---------- */
+.deco {
+  --inset: clamp(14px, 3vmin, 34px);
+  --cs: clamp(78px, 17vmin, 170px);
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* bingkai ganda */
+.deco::before,
+.deco::after {
+  content: "";
+  position: absolute;
+  border-radius: 6px;
+}
+.deco::before { inset: var(--inset); border: 1px solid rgba(207, 176, 122, 0.55); }
+.deco::after { inset: calc(var(--inset) + 8px); border: 1px solid rgba(207, 176, 122, 0.2); border-radius: 3px; }
+.frame { display: none; } /* bingkai lama digantikan bingkai di .deco */
+
+/* cahaya emas berkeliling bingkai */
+.frame-light {
+  position: absolute;
+  inset: var(--inset);
+  border-radius: 6px;
+  padding: 2px;
+  background: conic-gradient(from var(--a), transparent 0 70%, rgba(255, 236, 180, 0.95) 90%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: spinA 9s linear infinite;
+}
+@keyframes spinA { to { --a: 360deg; } }
+
+/* sinar cahaya lembut dari atas */
+.rays {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 140vmax;
+  height: 100%;
+  margin-left: -70vmax;
+  background: repeating-conic-gradient(from 168deg at 50% -8%, rgba(246, 226, 170, 0.085) 0 3deg, transparent 3deg 9deg);
+  -webkit-mask-image: linear-gradient(#000, transparent 80%);
+  mask-image: linear-gradient(#000, transparent 80%);
+  transform-origin: 50% 0;
+  animation: raySway 34s ease-in-out infinite alternate;
+}
+@keyframes raySway { from { transform: rotate(-3.5deg); } to { transform: rotate(3.5deg); } }
+
+/* rosette / mandala emas yang berputar pelan */
+.rosette {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(150vmin, 1400px);
+  height: min(150vmin, 1400px);
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.3;
+  opacity: 0.2;
+  translate: calc(var(--tx) * -18px) calc(var(--ty) * -14px);
+  transition: opacity 0.9s ease;
+}
+.rosette .thin { opacity: 0.55; stroke-width: 0.9; }
+.rosette .dots { stroke-width: 4; stroke-dasharray: 1 14; stroke-linecap: round; opacity: 0.8; }
+.rosette g[class^="rosette__"] { transform-box: fill-box; transform-origin: center; }
+.rosette__outer { animation: rot 190s linear infinite; }
+.rosette__mid { animation: rot 130s linear infinite reverse; }
+.rosette__inner { animation: rot 95s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }
+
+body[data-screen="welcome"] .rosette { opacity: 0.26; }
+body[data-screen="countdown"] .rosette { opacity: 0.3; }
+
+/* sudut flourish */
+.corner {
+  position: absolute;
+  width: var(--cs);
+  height: var(--cs);
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(207, 176, 122, 0.35));
+}
+.corner .solid { fill: var(--gold-light); stroke: none; }
+.corner .draw { stroke-dasharray: 1; stroke-dashoffset: 0; }
+.c-tl { top: calc(var(--inset) - var(--cs) * 0.043); left: calc(var(--inset) - var(--cs) * 0.043); translate: calc(var(--tx) * 6px) calc(var(--ty) * 6px); }
+.c-tr { top: calc(var(--inset) - var(--cs) * 0.043); right: calc(var(--inset) - var(--cs) * 0.043); transform: scaleX(-1); translate: calc(var(--tx) * -6px) calc(var(--ty) * 6px); }
+.c-bl { bottom: calc(var(--inset) - var(--cs) * 0.043); left: calc(var(--inset) - var(--cs) * 0.043); transform: scaleY(-1); translate: calc(var(--tx) * 6px) calc(var(--ty) * -6px); }
+.c-br { bottom: calc(var(--inset) - var(--cs) * 0.043); right: calc(var(--inset) - var(--cs) * 0.043); transform: scale(-1, -1); translate: calc(var(--tx) * -6px) calc(var(--ty) * -6px); }
+
+/* sudut "digambar" setiap kali kembali ke layar sambutan */
+body[data-screen="welcome"] .corner .draw { animation: cornerDraw 2.6s cubic-bezier(0.5, 0, 0.2, 1) both; }
+body[data-screen="welcome"] .corner .draw:nth-of-type(2) { animation-delay: 0.15s; }
+body[data-screen="welcome"] .corner .draw:nth-of-type(3) { animation-delay: 0.4s; }
+body[data-screen="welcome"] .corner .draw:nth-of-type(4) { animation-delay: 0.6s; }
+body[data-screen="welcome"] .corner .draw:nth-of-type(5) { animation-delay: 0.75s; }
+@keyframes cornerDraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* layar rekam: semua dekorasi mati (hemat CPU, gambar kamera bersih) */
+body[data-screen="recording"] .deco,
+body[data-screen="recording"] .fx-canvas { display: none; }
+
+/* ---------- Teks emas berkilau (foil) ---------- */
+.names__bride,
+.names__groom,
+.screen__title,
+.thanks__title,
+.countdown__number {
+  background-image: var(--foil);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: foil 7.5s linear infinite;
+}
+.names__amp {
+  background-image: var(--foil-gold);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: foil 6s linear infinite;
+}
+.names { text-shadow: none; filter: drop-shadow(0 6px 26px rgba(207, 176, 122, 0.3)); }
+.thanks__title, .screen__title { filter: drop-shadow(0 4px 18px rgba(207, 176, 122, 0.25)); }
+@keyframes foil { from { background-position: 160% 0; } to { background-position: -100% 0; } }
+
+/* garis hias di kiri-kanan judul layar */
+.screen__title::before,
+.screen__title::after {
+  content: "";
+  display: inline-block;
+  width: clamp(28px, 8vmin, 90px);
+  height: 1px;
+  margin: 0 0.55em;
+  vertical-align: middle;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+.screen__title::after { transform: scaleX(-1); }
+
+/* ornamen pemisah: garis digambar + berlian berdenyut */
+.ornament line { stroke-dasharray: 130; stroke-dashoffset: 130; animation: lineDraw 1.4s 0.9s ease forwards; }
+.ornament path { transform-box: fill-box; transform-origin: center; animation: gem 3.2s ease-in-out infinite; }
+.ornament circle { animation: twinkle 3.2s ease-in-out infinite; }
+@keyframes lineDraw { to { stroke-dashoffset: 0; } }
+@keyframes gem { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); filter: drop-shadow(0 0 5px #f7e3b0); } }
+@keyframes twinkle { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+
+/* ---------- Tombol emas 3D ---------- */
+.btn--primary {
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 6px 0 #8a6a3a,
+    0 18px 30px rgba(0, 0, 0, 0.45),
+    0 0 34px rgba(207, 176, 122, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+}
+.btn--primary::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: 0;
+  width: 34%;
+  height: 140%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: translateX(-260%) skewX(-20deg);
+  animation: shine 4.6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes shine {
+  0%, 52% { transform: translateX(-260%) skewX(-20deg); }
+  100% { transform: translateX(420%) skewX(-20deg); }
+}
+.btn--primary:active {
+  translate: 0 5px;
+  box-shadow:
+    0 1px 0 #8a6a3a,
+    0 8px 16px rgba(0, 0, 0, 0.4),
+    0 0 24px rgba(207, 176, 122, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.btn--ghost {
+  box-shadow: inset 0 0 0 1px rgba(207, 176, 122, 0.12), 0 10px 26px rgba(0, 0, 0, 0.35);
+}
+.btn--ghost:active { translate: 0 3px; }
+
+/* denyut cahaya pada tombol MULAI (menimpa keyframe lama agar bayangan 3D tetap ada) */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 6px 0 #8a6a3a, 0 18px 30px rgba(0, 0, 0, 0.45), 0 0 30px rgba(207, 176, 122, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -2px 0 rgba(0, 0, 0, 0.12); }
+  50% { box-shadow: 0 6px 0 #8a6a3a, 0 18px 30px rgba(0, 0, 0, 0.45), 0 0 58px rgba(230, 210, 166, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -2px 0 rgba(0, 0, 0, 0.12); }
+}
+.btn:disabled::after { animation: none; }
+
+/* ---------- Bingkai video (intro & hasil) ---------- */
+.video-box {
+  border-color: rgba(207, 176, 122, 0.75);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 0 6px rgba(207, 176, 122, 0.07), 0 0 70px rgba(207, 176, 122, 0.14);
+}
+.video-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--a), transparent 0 68%, rgba(255, 236, 180, 0.95) 90%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: spinA 7s linear infinite;
+  pointer-events: none;
+}
+
+/* ---------- Hitung mundur 3D ---------- */
+.countdown__ring {
+  border: 0;
+  background: radial-gradient(circle, rgba(207, 176, 122, 0.12), transparent 70%);
+  box-shadow:
+    0 0 0 1.5px rgba(207, 176, 122, 0.75),
+    0 0 0 16px rgba(207, 176, 122, 0.06),
+    0 0 120px rgba(207, 176, 122, 0.24) inset,
+    0 34px 80px rgba(0, 0, 0, 0.55);
+  transform-style: preserve-3d;
+  animation: ringFloat 6s ease-in-out infinite;
+}
+@keyframes ringFloat {
+  0%, 100% { transform: rotateX(9deg) rotateY(-11deg); }
+  50% { transform: rotateX(-7deg) rotateY(12deg); }
+}
+.countdown__ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(246, 226, 170, 0.85);
+  opacity: 0;
+  pointer-events: none;
+}
+.countdown__ring.pulse::before { animation: pulseOut 0.95s ease-out; }
+@keyframes pulseOut {
+  from { opacity: 0.9; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.55); }
+}
+.countdown__number { filter: drop-shadow(0 8px 30px rgba(207, 176, 122, 0.5)); translate: 0 0 60px; }
+.countdown__number.tick { animation: tick3d 0.95s cubic-bezier(0.22, 0.61, 0.36, 1) both, foil 7.5s linear infinite; }
+@keyframes tick3d {
+  0%   { opacity: 0; transform: perspective(700px) rotateX(-85deg) scale(1.5); }
+  38%  { opacity: 1; transform: perspective(700px) rotateX(0) scale(1); }
+  80%  { opacity: 1; transform: perspective(700px) rotateX(0) scale(0.97); }
+  100% { opacity: 0.3; transform: perspective(700px) rotateX(12deg) scale(0.86); }
+}
+
+/* ---------- Layar REKAM: hampir fullscreen ---------- */
+.screen--recording { padding: clamp(8px, 1.5vmin, 16px); }
+.screen--recording .screen__inner {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  gap: 0;
+  justify-content: flex-start;
+}
+.screen--recording .camera-box {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  aspect-ratio: auto;
+  border-radius: 24px;
+  border: 1.5px solid rgba(207, 176, 122, 0.8);
+  box-shadow: 0 0 0 5px rgba(207, 176, 122, 0.08), 0 0 60px rgba(207, 176, 122, 0.12);
+}
+.camera-video { object-fit: var(--cam-fit, cover); }
+.screen--recording .camera-box::before,
+.screen--recording .camera-box::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.screen--recording .camera-box::before { top: 0; height: 24%; background: linear-gradient(rgba(15, 9, 6, 0.72), transparent); }
+.screen--recording .camera-box::after { bottom: 0; height: 30%; background: linear-gradient(transparent, rgba(15, 9, 6, 0.78)); }
+.screen--recording .corner { z-index: 2; width: 34px; height: 34px; }
+
+.screen--recording .rec-bar {
+  position: absolute;
+  top: clamp(26px, 3.6vmin, 44px);
+  left: clamp(18px, 3vmin, 36px);
+  right: clamp(18px, 3vmin, 36px);
+  width: auto;
+  min-width: 0;
+  z-index: 4;
+}
+.screen--recording .rec-indicator { background: rgba(20, 10, 8, 0.66); }
+.screen--recording .rec-timer {
+  padding: 6px 22px;
+  border-radius: 999px;
+  background: rgba(20, 10, 8, 0.66);
+  border: 1px solid rgba(207, 176, 122, 0.5);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+.screen--recording .actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(22px, 4vmin, 48px);
+  z-index: 4;
+}
+.screen--recording .btn--stop { min-height: 84px; }
+
+/* bilah progres 60 detik */
+.screen--recording .screen__inner::before,
+.screen--recording .screen__inner::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 26px;
+  height: 5px;
+  border-radius: 5px;
+  z-index: 5;
+  pointer-events: none;
+}
+.screen--recording .screen__inner::before { right: 26px; background: rgba(247, 241, 227, 0.18); }
+.screen--recording .screen__inner::after {
+  width: calc((100% - 52px) * var(--rec-progress, 0));
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold-light));
+  box-shadow: 0 0 10px rgba(230, 210, 166, 0.7);
+  transition: width 0.25s linear;
+}
+
+/* ---------- Thank You ---------- */
+.thanks__title { font-size: clamp(3.4rem, 10vmin, 6.4rem); }
+
+/* ---------- Pintu masuk admin tersembunyi (tidak terlihat) ---------- */
+.admin-hotspot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: clamp(96px, 14vmin, 150px);
+  height: clamp(96px, 14vmin, 150px);
+  z-index: 30;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  opacity: 0;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- Mode ringan (otomatis bila perangkat lambat) ---------- */
+body.lite .frame-light,
+body.lite .rays,
+body.lite .video-box::after { display: none; }
+body.lite .rosette__outer,
+body.lite .rosette__mid,
+body.lite .rosette__inner,
+body.lite .countdown__ring { animation: none; }
+body.lite .names, body.lite .thanks__title, body.lite .screen__title { filter: none; }
+body.lite .welcome__content,
+body.lite .screen__inner { will-change: auto; }
+
+/* ---------- Layar kecil: kurangi dekorasi ---------- */
+@media (max-height: 560px) {
+  .rosette { opacity: 0.14 !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .frame-light, .rays, .video-box::after { display: none; }
+  .welcome__content, .screen__inner { transform: none !important; }
+}

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#241812" />
+  <title>Dashboard Admin · Wedding Video Guestbook</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+
+  <!-- Font lokal (self-hosted) — tanpa CDN, tersedia saat offline -->
+  <link rel="stylesheet" href="fonts/fonts.css" />
+  <link rel="stylesheet" href="admin.css" />
+  <link rel="stylesheet" href="pwa.css" />
+</head>
+<body>
+
+  <!-- ============ LAYAR PIN ============ -->
+  <section class="lock" id="lockScreen" aria-label="Masuk admin">
+    <form class="lock__card" id="pinForm" autocomplete="off" novalidate>
+      <svg class="ornament" viewBox="0 0 320 24" aria-hidden="true">
+        <line x1="0" y1="12" x2="130" y2="12" />
+        <path d="M160 2 L170 12 L160 22 L150 12 Z" />
+        <circle cx="138" cy="12" r="2.5" />
+        <circle cx="182" cy="12" r="2.5" />
+        <line x1="190" y1="12" x2="320" y2="12" />
+      </svg>
+      <p class="eyebrow">Wedding Video Guestbook</p>
+      <h1 class="lock__title">Dashboard Admin</h1>
+      <p class="lock__text">Masukkan PIN admin untuk melanjutkan.</p>
+
+      <label class="sr-only" for="pinInput">PIN admin</label>
+      <input id="pinInput" class="pin-input" type="password" inputmode="numeric" pattern="[0-9]*"
+             maxlength="8" autocomplete="off" placeholder="••••" />
+
+      <p class="form-error" id="pinError" role="alert" hidden></p>
+
+      <button class="btn btn--primary btn--block" id="pinSubmit" type="submit">MASUK</button>
+
+      <p class="lock__note">
+        PIN ini hanya membatasi akses secara lokal di perangkat ini dan tidak setara dengan keamanan server.
+      </p>
+    </form>
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <div class="app" id="adminApp" hidden>
+
+    <header class="topbar">
+      <div class="topbar__brand">
+        <span class="topbar__eyebrow">Dashboard Admin</span>
+        <span class="topbar__names" id="brandName">Alya &amp; Dimas</span>
+      </div>
+
+      <nav class="tabs" role="tablist" aria-label="Navigasi dashboard">
+        <button class="tab is-active" role="tab" type="button" data-view="gallery" aria-selected="true">Galeri</button>
+        <button class="tab" role="tab" type="button" data-view="event" aria-selected="false">Acara</button>
+        <button class="tab" role="tab" type="button" data-view="security" aria-selected="false">Keamanan</button>
+        <button class="tab" role="tab" type="button" data-view="app" aria-selected="false">Aplikasi</button>
+      </nav>
+
+      <div class="topbar__actions">
+        <a class="btn btn--ghost btn--sm" href="index.html">Layar Tamu</a>
+        <button class="btn btn--ghost btn--sm" type="button" id="lockBtn">Kunci</button>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <div class="banner" id="defaultPinBanner" role="alert" hidden>
+        <p><strong>PIN default pengujian masih dipakai.</strong> Ganti PIN sebelum acara dimulai.</p>
+        <button class="btn btn--primary btn--sm" type="button" id="bannerGoSecurity">GANTI PIN</button>
+      </div>
+
+      <!-- ===== GALERI ===== -->
+      <section class="view" id="view-gallery" aria-label="Galeri video">
+
+        <div class="stats" aria-label="Statistik">
+          <article class="stat">
+            <p class="stat__label">Total Video</p>
+            <p class="stat__value" id="statCount">–</p>
+            <p class="stat__sub">rekaman tamu tersimpan</p>
+          </article>
+          <article class="stat">
+            <p class="stat__label">Total Durasi</p>
+            <p class="stat__value" id="statDuration">–</p>
+            <p class="stat__sub">dari timer perekaman</p>
+          </article>
+          <article class="stat">
+            <p class="stat__label">Ukuran Video</p>
+            <p class="stat__value" id="statSize">–</p>
+            <p class="stat__sub" id="statSizeSub">&nbsp;</p>
+          </article>
+          <article class="stat">
+            <p class="stat__label">Ruang Tersedia</p>
+            <p class="stat__value" id="statFree">–</p>
+            <p class="stat__sub" id="statFreeSub">&nbsp;</p>
+          </article>
+        </div>
+
+        <div class="section-head">
+          <h2 class="section-title">Galeri Video <span class="section-count" id="galleryCount"></span></h2>
+          <button class="btn btn--ghost btn--sm" type="button" id="refreshBtn">Muat Ulang</button>
+        </div>
+
+        <div class="state" id="galleryLoading">
+          <div class="spinner" aria-hidden="true"></div>
+          <p>Memuat video…</p>
+        </div>
+
+        <div class="state" id="galleryEmpty" hidden>
+          <svg class="state__icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="12" width="28" height="24" rx="5"/><path d="M32 21 L44 14 V34 L32 27 Z"/></svg>
+          <h3>Belum ada video</h3>
+          <p>Rekaman tamu akan muncul di sini secara otomatis setelah mereka selesai merekam pesan.</p>
+        </div>
+
+        <div class="state state--error" id="galleryError" hidden>
+          <p id="galleryErrorText">Terjadi kesalahan.</p>
+          <button class="btn btn--ghost btn--sm" type="button" id="galleryRetry">COBA LAGI</button>
+        </div>
+
+        <div class="gallery" id="galleryGrid" hidden></div>
+      </section>
+
+      <!-- ===== ACARA ===== -->
+      <section class="view" id="view-event" aria-label="Pengelolaan acara" hidden>
+        <div class="grid-2">
+
+          <form class="panel" id="eventForm" novalidate>
+            <h2 class="panel__title">Nama Pengantin</h2>
+            <p class="panel__text">Ditampilkan pada layar sambutan tamu. Disimpan lokal di tablet ini.</p>
+
+            <label class="field">
+              <span class="field__label">Pengantin 1</span>
+              <input class="input" id="brideInput" type="text" maxlength="30" placeholder="Alya" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span class="field__label">Pengantin 2</span>
+              <input class="input" id="groomInput" type="text" maxlength="30" placeholder="Dimas" autocomplete="off" />
+            </label>
+
+            <p class="preview-names" id="namePreview" aria-live="polite">Alya &amp; Dimas</p>
+            <p class="form-error" id="eventError" role="alert" hidden></p>
+
+            <button class="btn btn--primary" type="submit" id="eventSaveBtn">SIMPAN NAMA</button>
+          </form>
+
+          <div class="panel">
+            <h2 class="panel__title">Video Intro Pengantin</h2>
+            <p class="panel__text">Diputar sebelum tamu merekam. Tanpa video intro, tamu langsung ke hitung mundur.</p>
+
+            <div class="intro-status" id="introStatus">
+              <span class="chip" id="introChip">Memeriksa…</span>
+              <dl class="kv" id="introDetails"></dl>
+            </div>
+
+            <p class="form-error" id="introError" role="alert" hidden></p>
+
+            <div class="btn-row">
+              <button class="btn btn--ghost" type="button" id="introPlayBtn" hidden>PUTAR INTRO</button>
+              <button class="btn btn--primary" type="button" id="introPickBtn">UNGGAH VIDEO INTRO</button>
+            </div>
+            <input type="file" id="introFile" accept="video/mp4,video/webm,video/*" hidden />
+            <p class="panel__hint">Format MP4 atau WebM. Perubahan berlaku untuk tamu berikutnya.</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ===== KEAMANAN ===== -->
+      <section class="view" id="view-security" aria-label="Keamanan" hidden>
+        <div class="grid-2">
+
+          <form class="panel" id="changePinForm" autocomplete="off" novalidate>
+            <h2 class="panel__title">Ganti PIN Admin</h2>
+            <p class="panel__text" id="pinStatus">&nbsp;</p>
+
+            <label class="field">
+              <span class="field__label">PIN saat ini</span>
+              <input class="input" id="curPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span class="field__label">PIN baru (4–8 angka)</span>
+              <input class="input" id="newPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span class="field__label">Ulangi PIN baru</span>
+              <input class="input" id="confirmPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" />
+            </label>
+
+            <p class="form-error" id="pinChangeError" role="alert" hidden></p>
+            <button class="btn btn--primary" type="submit" id="pinChangeBtn">SIMPAN PIN BARU</button>
+          </form>
+
+          <div class="panel">
+            <h2 class="panel__title">Catatan Keamanan</h2>
+            <ul class="notes">
+              <li>PIN diperiksa di browser (disimpan sebagai hash PBKDF2), <strong>bukan di server</strong>. Ini pembatas akses biasa, bukan pengaman setingkat server.</li>
+              <li>Video tersimpan di penyimpanan browser tablet ini. Siapa pun yang dapat membuka profil browser atau DevTools pada tablet dapat mengaksesnya tanpa PIN.</li>
+              <li>Dashboard tidak ditautkan dari layar tamu; alamatnya hanya <code>admin.html</code>.</li>
+              <li>Sesi otomatis terkunci setelah 10 menit tanpa aktivitas.</li>
+              <li>Cadangkan video secara berkala dengan tombol Unduh.</li>
+            </ul>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ===== APLIKASI (PWA & OFFLINE) ===== -->
+      <section class="view" id="view-app" aria-label="Status aplikasi dan offline" hidden>
+        <div class="grid-2">
+
+          <div class="panel">
+            <h2 class="panel__title">Status Aplikasi &amp; Offline</h2>
+            <p class="panel__text">Pemeriksaan ini hanya membaca kondisi perangkat ini. Hasil "Siap offline" baru terbukti setelah Anda mengujinya dengan mode pesawat.</p>
+
+            <div class="intro-status">
+              <span class="chip" id="pwaChip">Memeriksa…</span>
+              <dl class="kv" id="pwaDetails"></dl>
+            </div>
+
+            <p class="form-error" id="pwaError" role="alert" hidden></p>
+
+            <div class="btn-row">
+              <button class="btn btn--primary" type="button" id="pwaInstallBtn" hidden>PASANG APLIKASI</button>
+              <button class="btn btn--ghost" type="button" id="pwaCheckBtn">PERIKSA PEMBARUAN</button>
+              <button class="btn btn--primary" type="button" id="pwaApplyBtn" hidden>PERBARUI SEKARANG</button>
+            </div>
+            <p class="panel__hint" id="pwaHint">&nbsp;</p>
+          </div>
+
+          <div class="panel">
+            <h2 class="panel__title">Catatan Offline</h2>
+            <ul class="notes">
+              <li>Aplikasi dan font disimpan di Cache Storage; video tamu <strong>tidak pernah</strong> masuk Cache Storage — tetap di IndexedDB.</li>
+              <li>Memperbarui versi aplikasi hanya mengganti cache. IndexedDB (video, intro, nama pengantin, PIN) tidak disentuh.</li>
+              <li>Versi baru diaktifkan otomatis di layar tamu hanya saat sedang idle di layar sambutan.</li>
+              <li>Menghapus data situs/aplikasi lewat pengaturan Chrome atau Android <strong>akan menghapus video</strong>. Unduh cadangan secara berkala.</li>
+              <li>Jika tombol Pasang tidak muncul, gunakan menu ⋮ Chrome → <em>Instal aplikasi</em> / <em>Tambahkan ke layar utama</em>.</li>
+            </ul>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ============ DIALOG PEMUTAR ============ -->
+  <dialog class="dialog dialog--player" id="playerDialog" aria-labelledby="playerTitle">
+    <div class="dialog__inner">
+      <div class="dialog__head">
+        <h3 id="playerTitle">Putar video</h3>
+        <button class="btn btn--ghost btn--sm" type="button" id="playerClose">TUTUP</button>
+      </div>
+      <div class="player">
+        <video id="playerVideo" controls playsinline></video>
+        <div class="player__loading" id="playerLoading"><div class="spinner" aria-hidden="true"></div></div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ============ DIALOG KONFIRMASI ============ -->
+  <dialog class="dialog dialog--confirm" id="confirmDialog" aria-labelledby="confirmTitle">
+    <form method="dialog" class="dialog__inner">
+      <h3 id="confirmTitle">Konfirmasi</h3>
+      <p id="confirmMessage"></p>
+      <div class="dialog__actions">
+        <button class="btn btn--ghost" value="cancel" id="confirmCancel" autofocus>BATAL</button>
+        <button class="btn btn--danger" value="ok" id="confirmOk">LANJUT</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="db.js"></script>
+  <script src="pwa.js" data-mode="admin"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
